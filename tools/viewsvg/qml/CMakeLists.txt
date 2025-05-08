@@ -7,7 +7,7 @@ file(
 qt_add_qml_module(
     ${PROJECT_NAME}_qml
     URI "qml"
-    VERSION 1.0
+    VERSION 1.0.0
     QML_FILES ${SOURCES_QML}
     RESOURCE_PREFIX "/qt/qml"
 )

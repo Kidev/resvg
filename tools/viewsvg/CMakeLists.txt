@@ -1,12 +1,21 @@
 cmake_minimum_required(VERSION 3.22)
 
-add_definitions(-DVERSION_TAG="${VERSION_TAG}")
+if (DEFINED VERSION_TAG)
+    set(PROJECT_VERSION "${VERSION_TAG}")
+elseif (DEFINED ENV{VERSION_TAG})
+    set(PROJECT_VERSION "$ENV{VERSION_TAG}")
+else ()
+    message(WARNING "VERSION_TAG not set, using 0.0.0")
+    set(PROJECT_VERSION "0.0.0")
+endif ()
 
 project(
     viewsvg
-    VERSION ${VERSION_TAG}
+    VERSION ${PROJECT_VERSION}
     LANGUAGES CXX
 )
+
+add_definitions(-DVERSION_TAG="${PROJECT_VERSION}")
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -77,9 +86,6 @@ elseif (APPLE)
     endif ()
     target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Werror -Wpedantic)
 else ()
-    set_target_properties(
-        ${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-    )
     if (EXISTS "${RESVG_LIB_PATH}/libresvg.a")
         set(RESVG_LIB "${RESVG_LIB_PATH}/libresvg.a")
     else ()
