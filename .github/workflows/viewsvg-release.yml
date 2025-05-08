@@ -30,9 +30,10 @@ jobs:
             echo "release_tag=${LATEST_RELEASE}" >> $GITHUB_OUTPUT
             STRIPPED_TAG="${LATEST_RELEASE#v}"
           else
-            echo "Using specified release: ${{ github.event.inputs.release_tag }}"
-            echo "release_tag=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
-            STRIPPED_TAG="${{ github.event.inputs.release_tag#v }}"
+            INPUT_TAG="${{ github.event.inputs.release_tag }}"
+            echo "Using specified release: ${INPUT_TAG}"
+            echo "release_tag=${INPUT_TAG}" >> $GITHUB_OUTPUT
+            STRIPPED_TAG="${INPUT_TAG#v}"
           fi
           echo "stripped_tag=${STRIPPED_TAG}" >> $GITHUB_OUTPUT
 
