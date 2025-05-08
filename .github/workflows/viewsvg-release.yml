@@ -87,7 +87,7 @@ jobs:
           mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
 
           # Copy viewsvg binary
-          cp viewsvg AppDir/usr/bin/
+          cp bin/viewsvg AppDir/usr/bin/
 
           # Copy libresvg.so and set correct permissions
           cp ../../target/release/libresvg.so AppDir/usr/lib/
@@ -201,7 +201,7 @@ jobs:
           cmake -S . -B bin -DVERSION_TAG=${{ steps.determine_tag.outputs.stripped_tag }}
           cmake --build bin
           mkdir viewsvg-bin
-          cp release/viewsvg.exe viewsvg-bin/viewsvg.exe
+          cp bin/viewsvg.exe viewsvg-bin/viewsvg.exe
           windeployqt --no-translations viewsvg-bin/viewsvg.exe
           cd viewsvg-bin
           7z a -tzip -mx9 viewsvg-win64.zip *
@@ -274,7 +274,7 @@ jobs:
         run: |
           cmake -S . -B bin -DVERSION_TAG=${{ steps.determine_tag.outputs.stripped_tag }}
           cmake --build bin
-          macdeployqt viewsvg.app
+          macdeployqt bin/viewsvg.app
           rm -r viewsvg.app/Contents/Plugins/iconengines
           rm -r viewsvg.app/Contents/Plugins/imageformats
           7z a -tzip -mx9 viewsvg-macos-x86_64.zip viewsvg.app
