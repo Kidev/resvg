@@ -13,7 +13,9 @@
 #include <QScreen>
 #include <QtConcurrent/QtConcurrent>
 
-SvgRenderer::SvgRenderer(QQuickItem *parent) : QQuickPaintedItem(parent)
+SvgRenderer::SvgRenderer(QQuickItem *parent)
+    : QQuickPaintedItem(parent)
+    , CHECKBOARD_BRUSH{QBrush(generateCheckerboardTexture(SvgRenderer::CHECKBOARD_SIZE))}
 {
     // Initialize
     ResvgRenderer::initLog();
@@ -53,21 +55,18 @@ void SvgRenderer::paint(QPainter *painter)
     QMutexLocker locker(&m_mutex);
 
     // Draw background based on selected mode
-    QRectF targetRect {boundingRect()};
+    QRectF targetRect{boundingRect()};
 
     switch (m_background) {
     case White:
         painter->fillRect(targetRect, Qt::white);
         break;
     case CheckBoard: {
-        // Use the checker pattern as a brush
-        QBrush checkerBrush {generateCheckerboardTexture()};
-        painter->fillRect(targetRect, checkerBrush);
+        painter->fillRect(targetRect, this->CHECKBOARD_BRUSH);
         break;
     }
     case None:
     default:
-        // Draw nothing for background
         break;
     }
 
@@ -396,9 +395,9 @@ QRect SvgRenderer::viewBox() const
     return QRect();
 }
 
-QImage SvgRenderer::generateCheckerboardTexture() const
+inline const QImage generateCheckerboardTexture(int size)
 {
-    QImage texture(CHECKERBOARD_SIZE * 2, CHECKERBOARD_SIZE * 2, QImage::Format_ARGB32);
+    QImage texture(size * 2, size * 2, QImage::Format_ARGB32);
     texture.fill(Qt::transparent);
 
     QPainter painter(&texture);
@@ -406,14 +405,10 @@ QImage SvgRenderer::generateCheckerboardTexture() const
     QColor light(255, 255, 255);
 
     // Draw checker pattern
-    painter.fillRect(0, 0, CHECKERBOARD_SIZE, CHECKERBOARD_SIZE, light);
-    painter.fillRect(CHECKERBOARD_SIZE, 0, CHECKERBOARD_SIZE, CHECKERBOARD_SIZE, dark);
-    painter.fillRect(0, CHECKERBOARD_SIZE, CHECKERBOARD_SIZE, CHECKERBOARD_SIZE, dark);
-    painter.fillRect(CHECKERBOARD_SIZE,
-                     CHECKERBOARD_SIZE,
-                     CHECKERBOARD_SIZE,
-                     CHECKERBOARD_SIZE,
-                     light);
+    painter.fillRect(0, 0, size, size, light);
+    painter.fillRect(size, 0, size, size, dark);
+    painter.fillRect(0, size, size, size, dark);
+    painter.fillRect(size, size, size, size, light);
 
     return texture;
 }

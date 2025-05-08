@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.22)
 
+add_definitions(-DVERSION_TAG="${VERSION_TAG}")
+
 project(
     viewsvg
-    VERSION 1.0.0
+    VERSION ${VERSION_TAG}
     LANGUAGES CXX
 )
 
@@ -11,8 +13,6 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-add_definitions(-DVERSION_TAG="${VERSION_TAG}")
 
 find_package(
     Qt6 REQUIRED
@@ -42,9 +42,34 @@ target_include_directories(
 )
 
 if (WIN32)
+
+    set_target_properties(
+        ${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE VS_DEBUGGER_WORKING_DIRECTORY
+                                                         "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+    )
+    set(
+        PLATFORM_LIBS
+        Ws2_32
+        Advapi32
+        Bcrypt
+        Userenv
+        Ntdll
+    )
+
     set(RESVG_LIB "${RESVG_LIB_PATH}/resvg.lib")
     target_compile_options(${PROJECT_NAME} PUBLIC /W4 /WX)
+
 elseif (APPLE)
+
+    set_target_properties(
+        ${PROJECT_NAME}
+        PROPERTIES MACOSX_BUNDLE TRUE
+                   MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/resources/Info.plist"
+                   MACOSX_BUNDLE_BUNDLE_NAME "ViewSVG"
+                   MACOSX_BUNDLE_GUI_IDENTIFIER "com.resvg.viewsvg"
+                   MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+    )
+
     if (EXISTS "${RESVG_LIB_PATH}/libresvg.a")
         set(RESVG_LIB "${RESVG_LIB_PATH}/libresvg.a")
     else ()
@@ -52,6 +77,9 @@ elseif (APPLE)
     endif ()
     target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Werror -Wpedantic)
 else ()
+    set_target_properties(
+        ${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    )
     if (EXISTS "${RESVG_LIB_PATH}/libresvg.a")
         set(RESVG_LIB "${RESVG_LIB_PATH}/libresvg.a")
     else ()
@@ -70,9 +98,9 @@ target_link_libraries(
             Qt6::QuickControls2
             Qt6::Concurrent
             ${RESVG_LIB}
+            ${PLATFORM_LIBS}
 )
 
-# Installation
 include(GNUInstallDirs)
 
 install(
@@ -80,6 +108,7 @@ install(
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 qt_generate_deploy_qml_app_script(
