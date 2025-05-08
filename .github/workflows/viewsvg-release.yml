@@ -79,8 +79,10 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B bin -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" -DCMAKE_BUILD_TYPE="Release"
-          cmake --build bin
+          cmake -S . -B build -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_INSTALL_PREFIX="./install"
+
+          cmake --build build
+          cmake --install build
 
           # Create AppDir structure
           mkdir -p AppDir/usr/bin
@@ -88,7 +90,7 @@ jobs:
           mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
 
           # Copy viewsvg binary
-          cp bin/viewsvg AppDir/usr/bin/
+          cp build/viewsvg AppDir/usr/bin/
 
           # Copy libresvg.so and set correct permissions
           cp ../../target/release/libresvg.so AppDir/usr/lib/
@@ -200,11 +202,14 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B bin -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" -DCMAKE_BUILD_TYPE="Release"
-          cmake --build bin
+          cmake -S . -B build -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_INSTALL_PREFIX="./install"
+
+          cmake --build build
+          cmake --install build
+
           mkdir viewsvg-bin
-          cp bin/viewsvg.exe viewsvg-bin/viewsvg.exe
-          windeployqt --no-translations --qmldir=bin/qml viewsvg-bin/viewsvg.exe
+          cp build/viewsvg.exe viewsvg-bin/viewsvg.exe
+          windeployqt --no-translations --qmldir=qml viewsvg-bin/viewsvg.exe
           cd viewsvg-bin
           7z a -tzip -mx9 viewsvg-win64.zip *
 
@@ -274,10 +279,11 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B bin -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" -DCMAKE_BUILD_TYPE="Release"
-          cmake --build bin
-          ls -la .
-          macdeployqt viewsvg.app -qmldir=bin/qml
+          cmake -S . -B build -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_INSTALL_PREFIX="./install"
+
+          cmake --build build
+          cmake --install build
+          macdeployqt viewsvg.app -qmldir=qml
           rm -r viewsvg.app/Contents/Plugins/iconengines
           rm -r viewsvg.app/Contents/Plugins/imageformats
           7z a -tzip -mx9 viewsvg-macos-x86_64.zip viewsvg.app
