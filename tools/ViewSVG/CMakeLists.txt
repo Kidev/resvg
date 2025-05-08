@@ -12,6 +12,8 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+add_definitions(-DVERSION_TAG="${VERSION_TAG}")
+
 find_package(
     Qt6 REQUIRED
     COMPONENTS Core

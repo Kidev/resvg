@@ -16,10 +16,8 @@ ApplicationWindow {
     Material.primary: "#1E2A78"
     Material.roundedScale: Material.MediumScale
     Material.theme: Material.Dark
-
-    // Material design theme
     height: 700
-    title: "ViewSVG"
+    title: "ViewSVG (resvg v" + Application.version + ")"
     visible: true
     width: 900
 

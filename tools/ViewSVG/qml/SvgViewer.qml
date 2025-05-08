@@ -1,7 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Material
 import QtQuick.Controls
-import QtQuick.Layouts
 import SvgViewer 1.0
 
 Item {

@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 
     // Set application info
     app.setApplicationName("ViewSVG");
-    app.setApplicationVersion("1.0.0");
+    app.setApplicationVersion(QStringLiteral(VERSION_TAG));
 
     // Parse command line arguments
     QCommandLineParser parser;
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
 
     // Get initial file path if provided
     QString initialFilePath;
-    const QStringList args = parser.positionalArguments();
+    const QStringList args{parser.positionalArguments()};
     if (!args.isEmpty()) {
         initialFilePath = args.first();
     }

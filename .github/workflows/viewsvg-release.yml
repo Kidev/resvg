@@ -28,10 +28,13 @@ jobs:
             LATEST_RELEASE=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
             echo "Using latest release: ${LATEST_RELEASE}"
             echo "release_tag=${LATEST_RELEASE}" >> $GITHUB_OUTPUT
+            STRIPPED_TAG="${LATEST_RELEASE#v}"
           else
             echo "Using specified release: ${{ github.event.inputs.release_tag }}"
             echo "release_tag=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
+            STRIPPED_TAG="${{ github.event.inputs.release_tag#v }}"
           fi
+          echo "stripped_tag=${STRIPPED_TAG}" >> $GITHUB_OUTPUT
 
       - name: Get release
         id: get_release
@@ -74,7 +77,8 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B build && cmake --build build
+          cmake -S . -B bin -DVERSION_TAG=${{ steps.determine_tag.outputs.stripped_tag }}
+          cmake --build bin
 
           # Create AppDir structure
           mkdir -p AppDir/usr/bin
@@ -193,7 +197,8 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B build && cmake --build build
+          cmake -S . -B bin -DVERSION_TAG=${{ steps.determine_tag.outputs.stripped_tag }}
+          cmake --build bin
           mkdir viewsvg-bin
           cp release/viewsvg.exe viewsvg-bin/viewsvg.exe
           windeployqt --no-translations viewsvg-bin/viewsvg.exe
@@ -266,7 +271,8 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B build && cmake --build build
+          cmake -S . -B bin -DVERSION_TAG=${{ steps.determine_tag.outputs.stripped_tag }}
+          cmake --build bin
           macdeployqt viewsvg.app
           rm -r viewsvg.app/Contents/Plugins/iconengines
           rm -r viewsvg.app/Contents/Plugins/imageformats
