@@ -5,7 +5,7 @@ file(
 )
 
 qt_add_qml_module(
-    qml.${PROJECT_NAME}
+    ${PROJECT_NAME}_qml
     URI "qml"
     VERSION 1.0
     QML_FILES ${SOURCES_QML}
