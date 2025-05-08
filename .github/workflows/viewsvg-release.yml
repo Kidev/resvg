@@ -20,6 +20,7 @@ jobs:
       upload_url: ${{ steps.get_release.outputs.upload_url }}
       release_tag: ${{ steps.determine_tag.outputs.release_tag }}
       release_id: ${{ steps.get_release.outputs.release_id }}
+      stripped_tag: ${{ steps.determine_tag.outputs.stripped_tag }}
     steps:
       - name: Determine release tag
         id: determine_tag
@@ -78,8 +79,9 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B bin -DVERSION_TAG=${{ steps.determine_tag.outputs.stripped_tag }}
+          cmake -S . -B bin -DVERSION_TAG=${{ needs.prepare-release.outputs.stripped_tag }}
           cmake --build bin
+          cmake --install bin
 
           # Create AppDir structure
           mkdir -p AppDir/usr/bin
@@ -124,7 +126,7 @@ jobs:
 
           # Add library path to environment
           export LD_LIBRARY_PATH=AppDir/usr/lib:$LD_LIBRARY_PATH
-          export QML_SOURCES_PATHS=$(pwd)/qml
+          export QML_SOURCES_PATHS=$(pwd)/bin/qml
 
           # Create AppImage with library path
           export OUTPUT=viewsvg-x86_64.AppImage
@@ -199,11 +201,12 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B bin -DVERSION_TAG=${{ steps.determine_tag.outputs.stripped_tag }}
+          cmake -S . -B bin -DVERSION_TAG=${{ needs.prepare-release.outputs.stripped_tag }}
           cmake --build bin
+          cmake --install bin
           mkdir viewsvg-bin
           cp bin/viewsvg.exe viewsvg-bin/viewsvg.exe
-          windeployqt --no-translations viewsvg-bin/viewsvg.exe
+          windeployqt --no-translations --qmldir=bin/qml viewsvg-bin/viewsvg.exe
           cd viewsvg-bin
           7z a -tzip -mx9 viewsvg-win64.zip *
 
@@ -273,9 +276,10 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B bin -DVERSION_TAG=${{ steps.determine_tag.outputs.stripped_tag }}
+          cmake -S . -B bin -DVERSION_TAG=${{ needs.prepare-release.outputs.stripped_tag }}
           cmake --build bin
-          macdeployqt bin/viewsvg.app
+          cmake --install bin
+          macdeployqt -qmldir=bin/qml bin/viewsvg.app
           rm -r viewsvg.app/Contents/Plugins/iconengines
           rm -r viewsvg.app/Contents/Plugins/imageformats
           7z a -tzip -mx9 viewsvg-macos-x86_64.zip viewsvg.app

@@ -75,7 +75,7 @@ elseif (APPLE)
         PROPERTIES MACOSX_BUNDLE TRUE
                    MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/resources/Info.plist"
                    MACOSX_BUNDLE_BUNDLE_NAME "ViewSVG"
-                   MACOSX_BUNDLE_GUI_IDENTIFIER "com.resvg.viewsvg"
+                   MACOSX_BUNDLE_GUI_IDENTIFIER "linebender.resvg.viewsvg"
                    MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
     )
 
@@ -122,5 +122,6 @@ qt_generate_deploy_qml_app_script(
     OUTPUT_SCRIPT deploy_script
     MACOS_BUNDLE_POST_BUILD NO_UNSUPPORTED_PLATFORM_ERROR
     DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
+    NO_TRANSLATIONS
 )
 install(SCRIPT ${deploy_script})
