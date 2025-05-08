@@ -79,7 +79,7 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B bin -DVERSION_TAG=${{ needs.prepare-release.outputs.stripped_tag }}  -DCMAKE_BUILD_TYPE="Release"
+          cmake -S . -B bin -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" -DCMAKE_BUILD_TYPE="Release"
           cmake --build bin
 
           # Create AppDir structure
@@ -200,7 +200,7 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B bin -DVERSION_TAG=${{ needs.prepare-release.outputs.stripped_tag }} -DCMAKE_BUILD_TYPE="Release"
+          cmake -S . -B bin -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" -DCMAKE_BUILD_TYPE="Release"
           cmake --build bin
           mkdir viewsvg-bin
           cp bin/viewsvg.exe viewsvg-bin/viewsvg.exe
@@ -274,9 +274,10 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B . -DVERSION_TAG=${{ needs.prepare-release.outputs.stripped_tag }} -DCMAKE_BUILD_TYPE="Release"
-          cmake --build .
-          macdeployqt -qmldir=qml viewsvg.app
+          cmake -S . -B bin -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" -DCMAKE_BUILD_TYPE="Release"
+          cmake --build bin
+          ls -la .
+          macdeployqt viewsvg.app -qmldir=bin/qml
           rm -r viewsvg.app/Contents/Plugins/iconengines
           rm -r viewsvg.app/Contents/Plugins/imageformats
           7z a -tzip -mx9 viewsvg-macos-x86_64.zip viewsvg.app
