@@ -4,16 +4,20 @@ import QtQuick.Controls.Material
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
-import Qt.labs.platform as Platform
 
 ApplicationWindow {
-    id: window
+    id: root
 
-    Material.accent: Material.Blue
-    Material.primary: Material.Indigo
+    Material.accent: "#E4B000"
+    Material.background: "#121212"
+    Material.containerStyle: Material.Filled
+    Material.elevation: 2
+    Material.foreground: "#FFFFFF"
+    Material.primary: "#1E2A78"
+    Material.roundedScale: Material.MediumScale
+    Material.theme: Material.Dark
 
     // Material design theme
-    Material.theme: Material.Light
     height: 700
     title: "ViewSVG"
     visible: true
@@ -40,7 +44,7 @@ ApplicationWindow {
                 text: {
                     switch (svgViewer.state) {
                     case "empty":
-                        return "Ready - Drop an SVG file to view";
+                        return "Ready";
                     case "loading":
                         return "Loading SVG...";
                     case "loaded":
@@ -50,11 +54,30 @@ ApplicationWindow {
                     }
                 }
             }
+
+            Label {
+                color: "white"
+                font.pixelSize: 12
+                text: "Size: " + svgViewer.renderer.imageSize.width + "×" + svgViewer.renderer.imageSize.height
+                visible: svgViewer.state === "loaded"
+            }
+
+            Item {
+                Layout.fillWidth: true
+            }
+
+            Label {
+                color: "white"
+                font.pixelSize: 12
+                text: svgViewer.renderer.fitToView ? "(Fit to view)" : "(Original size)"
+                visible: svgViewer.state === "loaded"
+            }
         }
     }
 
     // Top toolbar with Material design
     header: ToolBar {
+        Layout.fillWidth: true
         Material.foreground: "white"
         height: 56
 
@@ -72,14 +95,17 @@ ApplicationWindow {
 
                 Label {
                     color: "white"
+                    font.bold: true
                     text: "Size:"
                 }
 
                 ComboBox {
                     id: sizeComboBox
 
-                    Material.background: Material.LightGrey
-                    Material.foreground: Material.Grey
+                    Layout.minimumWidth: 175
+                    Layout.preferredHeight: 40
+                    Material.background: Material.BlueGrey
+                    Material.foreground: "#FFFFFF"
                     currentIndex: 1
                     model: ["Original", "Fit to View"]
 
@@ -92,15 +118,18 @@ ApplicationWindow {
 
                 Label {
                     color: "white"
+                    font.bold: true
                     text: "Background:"
                 }
 
                 ComboBox {
                     id: backgroundComboBox
 
-                    Material.background: Material.LightGrey
-                    Material.foreground: Material.Grey
-                    currentIndex: 1
+                    Layout.minimumWidth: 175
+                    Layout.preferredHeight: 40
+                    Material.background: Material.BlueGrey
+                    Material.foreground: "#FFFFFF"
+                    currentIndex: 2
                     model: ["None", "White", "Check board"]
 
                     onCurrentIndexChanged: svgViewer.renderer.background = currentIndex
@@ -110,50 +139,59 @@ ApplicationWindow {
             CheckBox {
                 id: borderCheckBox
 
-                Material.accent: Material.LightBlue
-
-                contentItem: Text {
-                    color: "white"
-                    font: borderCheckBox.font
-                    leftPadding: borderCheckBox.indicator.width + 4
-                    text: "Draw border"
-                    verticalAlignment: Text.AlignVCenter
-                }
+                font.bold: true
+                text: "Draw border"
 
                 onCheckedChanged: svgViewer.renderer.drawImageBorder = checked
             }
 
             Item {
                 Layout.fillWidth: true
-            } // Spacer
-
-
-
-            // SVG information display
-            Label {
-                id: infoLabel
-
-                color: "white"
-                font.pixelSize: 12
-                text: {
-                    if (svgViewer.state !== "loaded" || !svgViewer.renderer.imageSize)
-                        return "";
-
-                    return `SVG: ${svgViewer.renderer.imageSize.width}×${svgViewer.renderer.imageSize.height}`;
-                }
-                visible: svgViewer.state === "loaded"
             }
 
             Button {
-                Material.accent: Material.LightBlue
-                Material.background: Material.Blue
-                Material.foreground: "white"
-                highlighted: true
+                id: openSvgButton
+
+                Layout.minimumHeight: 50
+                font.bold: true
                 text: "Open SVG"
+
+                background: Rectangle {
+                    border.color: openSvgButton.hovered ? "#FFFFFF" : Material.accent
+                    border.width: 2
+                    color: "transparent"
+                    radius: 8
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
+                }
+                contentItem: Text {
+                    anchors.fill: parent
+                    color: openSvgButton.hovered ? "#FFFFFF" : Material.accent
+                    font: openSvgButton.font
+                    horizontalAlignment: Text.AlignHCenter
+                    text: openSvgButton.text
+                    verticalAlignment: Text.AlignVCenter
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
+                }
 
                 onClicked: fileDialog.open()
             }
         }
+    }
+
+    Shortcut {
+        sequence: "Esc"
+
+        onActivated: Qt.exit(0)
     }
 
     // File dialog for opening SVG files
@@ -176,7 +214,7 @@ ApplicationWindow {
         modal: true
         standardButtons: Dialog.Ok
         title: "Error"
-        width: Math.min(window.width - 50, 400)
+        width: Math.min(root.width - 50, 400)
 
         contentItem: Label {
             padding: 20

@@ -1,6 +1,9 @@
+// Copyright 2025 the Resvg Authors
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 #pragma once
 
-#include <QBrush>
+#include "ResvgQt.h"
 #include <QFuture>
 #include <QImage>
 #include <QMutex>
@@ -9,12 +12,9 @@
 #include <QSize>
 #include <QUrl>
 
-#include <ResvgQt.h>
-
 class SvgRenderer : public QQuickPaintedItem
 {
     Q_OBJECT
-    // Properties
     Q_PROPERTY(bool fitToView READ fitToView WRITE setFitToView NOTIFY fitToViewChanged)
     Q_PROPERTY(Background background READ background WRITE setBackground NOTIFY backgroundChanged)
     Q_PROPERTY(bool drawImageBorder READ drawImageBorder WRITE setDrawImageBorder NOTIFY
@@ -36,10 +36,8 @@ public:
     explicit SvgRenderer(QQuickItem *parent = nullptr);
     ~SvgRenderer() override;
 
-    // QQuickPaintedItem interface
     void paint(QPainter *painter) override;
 
-    // Property getters/setters
     bool fitToView() const { return m_fitToView; }
     void setFitToView(bool fit);
 
@@ -58,9 +56,7 @@ public:
     QSize imageSize() const { return m_imageSize; }
 
     // Methods
-    Q_INVOKABLE void loadDataFromBase64(const QString &dataBase64);
-
-    static const int CHECKERBOARD_SIZE {20};
+    void loadDataFromBase64(const QString &dataBase64);
 
 signals:
     void fitToViewChanged();
@@ -77,12 +73,20 @@ signals:
     void renderStarted();
     void renderFinished();
 
+    // Internal signals for thread communication
+    void imageLoadedSignal(const QImage &image, const QSize &size);
+    void loadResultSignal(const QString &errMsg);
+
 protected:
     void geometryChange(const QRectF &newGeometry, const QRectF &oldGeometry) override;
 
-private:
+private slots:
     void requestRender();
     void handleLoadResult(const QString &errMsg);
+    void handleImageLoaded(const QImage &image, const QSize &size);
+
+private:
+    QImage generateCheckerboardTexture() const;
 
     // Core SVG rendering components
     ResvgOptions m_options;
@@ -92,17 +96,17 @@ private:
     // State variables
     QUrl m_source;
     QString m_errorMsg;
-    bool m_fitToView {true};
-    Background m_background {CheckBoard};
-    bool m_drawImageBorder {false};
-    bool m_loading {false};
+    bool m_fitToView{true};
+    Background m_background{CheckBoard};
+    bool m_drawImageBorder{false};
+    bool m_loading{false};
     QImage m_image;
     QSize m_imageSize;
-    float m_dpiRatio {1.0f};
+    float m_dpiRatio{1.0f};
 
     // Async operation tracking
     QFuture<void> m_renderFuture;
 
     // Constants
-    const QBrush m_CHECKERBOARD;
+    static constexpr int CHECKERBOARD_SIZE{20};
 };

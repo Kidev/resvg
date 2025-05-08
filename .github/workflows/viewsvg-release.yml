@@ -74,8 +74,7 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          qmake6
-          make
+          cmake -S . -B build && cmake --build build
 
           # Create AppDir structure
           mkdir -p AppDir/usr/bin
@@ -194,8 +193,7 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          qmake6
-          nmake
+          cmake -S . -B build && cmake --build build
           mkdir viewsvg-bin
           cp release/viewsvg.exe viewsvg-bin/viewsvg.exe
           windeployqt --no-translations viewsvg-bin/viewsvg.exe
@@ -268,8 +266,7 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          qmake6
-          make
+          cmake -S . -B build && cmake --build build
           macdeployqt viewsvg.app
           rm -r viewsvg.app/Contents/Plugins/iconengines
           rm -r viewsvg.app/Contents/Plugins/imageformats

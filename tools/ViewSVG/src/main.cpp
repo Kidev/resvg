@@ -1,3 +1,6 @@
+// Copyright 2025 the Resvg Authors
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 #include "svgrenderer.hpp"
 #include <QCommandLineParser>
 #include <QGuiApplication>
@@ -6,11 +9,10 @@
 
 int main(int argc, char *argv[])
 {
-    QGuiApplication app {argc, argv};
+    QGuiApplication app{argc, argv};
 
     // Set application info
     app.setApplicationName("ViewSVG");
-    app.setOrganizationName("LineBender");
     app.setApplicationVersion("1.0.0");
 
     // Parse command line arguments

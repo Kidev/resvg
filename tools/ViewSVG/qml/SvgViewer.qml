@@ -66,15 +66,15 @@ Item {
     SvgRenderer {
         id: renderer
 
-        anchors.fill: parent
+        anchors.fill: root
 
         // Connect signals
         onLoadFailed: function (error) {
             root.loadFailed(error);
         }
-        onLoadSucceeded: console.debug("SVG loaded successfully")
-        onRenderFinished: console.debug("SVG rendering finished")
-        onRenderStarted: console.debug("SVG rendering started")
+        //onLoadSucceeded: console.debug("SVG loaded successfully")
+        //onRenderFinished: console.debug("SVG rendering finished")
+        //onRenderStarted: console.debug("SVG rendering started")
     }
 
     // Empty state placeholder text
@@ -140,53 +140,6 @@ Item {
         }
     }
 
-    // SVG info panel (visible when loaded)
-    Rectangle {
-        id: infoPanel
-
-        color: "#80000000"
-        height: 40
-        opacity: visible ? 0.8 : 0
-        visible: root.state === "loaded" && renderer.imageSize.width > 0
-
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 200
-            }
-        }
-
-        anchors {
-            bottom: parent.bottom
-            left: parent.left
-            right: parent.right
-        }
-
-        RowLayout {
-            spacing: 16
-
-            anchors {
-                fill: parent
-                margins: 8
-            }
-
-            Label {
-                color: "white"
-                font.pixelSize: 12
-                text: "Size: " + renderer.imageSize.width + "×" + renderer.imageSize.height
-            }
-
-            Item {
-                Layout.fillWidth: true
-            }
-
-            Label {
-                color: "white"
-                font.pixelSize: 12
-                text: renderer.fitToView ? "Fit to view" : "Original size"
-            }
-        }
-    }
-
     // Drag and drop functionality integrated in the component
     DropArea {
         id: dropArea
@@ -219,12 +172,12 @@ Item {
             id: dropHighlight
 
             anchors.fill: parent
-            color: "#4000A0FF"
+            color: Material.background
             radius: 8
             visible: false
 
             border {
-                color: "#0077CC"
+                color: Material.accent
                 width: 4
             }
 

@@ -1,3 +1,6 @@
+// Copyright 2025 the Resvg Authors
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
 #include "svgrenderer.hpp"
 
 #include <QDir>
@@ -10,40 +13,7 @@
 #include <QScreen>
 #include <QtConcurrent/QtConcurrent>
 
-inline QImage generateCheckerboardTexture()
-{
-    QImage texture(SvgRenderer::CHECKERBOARD_SIZE * 2,
-                   SvgRenderer::CHECKERBOARD_SIZE * 2,
-                   QImage::Format_ARGB32);
-    texture.fill(Qt::transparent);
-
-    QPainter painter(&texture);
-    QColor dark(220, 220, 220);
-    QColor light(255, 255, 255);
-
-    // Draw checker pattern
-    painter.fillRect(0, 0, SvgRenderer::CHECKERBOARD_SIZE, SvgRenderer::CHECKERBOARD_SIZE, light);
-    painter.fillRect(SvgRenderer::CHECKERBOARD_SIZE,
-                     0,
-                     SvgRenderer::CHECKERBOARD_SIZE,
-                     SvgRenderer::CHECKERBOARD_SIZE,
-                     dark);
-    painter.fillRect(0,
-                     SvgRenderer::CHECKERBOARD_SIZE,
-                     SvgRenderer::CHECKERBOARD_SIZE,
-                     SvgRenderer::CHECKERBOARD_SIZE,
-                     dark);
-    painter.fillRect(SvgRenderer::CHECKERBOARD_SIZE,
-                     SvgRenderer::CHECKERBOARD_SIZE,
-                     SvgRenderer::CHECKERBOARD_SIZE,
-                     SvgRenderer::CHECKERBOARD_SIZE,
-                     light);
-
-    return texture;
-}
-
-SvgRenderer::SvgRenderer(QQuickItem *parent)
-    : QQuickPaintedItem(parent), m_CHECKERBOARD {QBrush(generateCheckerboardTexture())}
+SvgRenderer::SvgRenderer(QQuickItem *parent) : QQuickPaintedItem(parent)
 {
     // Initialize
     ResvgRenderer::initLog();
@@ -60,6 +30,10 @@ SvgRenderer::SvgRenderer(QQuickItem *parent)
     // Connect signals when geometry changes
     connect(this, &QQuickItem::widthChanged, this, &SvgRenderer::requestRender);
     connect(this, &QQuickItem::heightChanged, this, &SvgRenderer::requestRender);
+
+    // Connect internal signals for thread communication
+    connect(this, &SvgRenderer::loadResultSignal, this, &SvgRenderer::handleLoadResult);
+    connect(this, &SvgRenderer::imageLoadedSignal, this, &SvgRenderer::handleImageLoaded);
 }
 
 SvgRenderer::~SvgRenderer()
@@ -79,7 +53,7 @@ void SvgRenderer::paint(QPainter *painter)
     QMutexLocker locker(&m_mutex);
 
     // Draw background based on selected mode
-    QRectF targetRect = boundingRect();
+    QRectF targetRect {boundingRect()};
 
     switch (m_background) {
     case White:
@@ -87,7 +61,8 @@ void SvgRenderer::paint(QPainter *painter)
         break;
     case CheckBoard: {
         // Use the checker pattern as a brush
-        painter->fillRect(targetRect, this->m_CHECKERBOARD);
+        QBrush checkerBrush {generateCheckerboardTexture()};
+        painter->fillRect(targetRect, checkerBrush);
         break;
     }
     case None:
@@ -197,6 +172,7 @@ void SvgRenderer::setSource(const QUrl &source)
     m_renderFuture = QtConcurrent::run([this, source]() {
         QString errMsg;
         QImage result;
+        QSize imageSize;
 
         try {
             // Create a local renderer instance
@@ -221,12 +197,14 @@ void SvgRenderer::setSource(const QUrl &source)
                 QFile file(source.toString());
                 if (!file.open(QIODevice::ReadOnly)) {
                     errMsg = tr("Failed to open file: %1").arg(source.toString());
+                    emit loadResultSignal(errMsg);
                     return;
                 }
 
                 QByteArray data = file.readAll();
                 if (!renderer->load(data, opts)) {
                     errMsg = renderer->errorString();
+                    emit loadResultSignal(errMsg);
                     return;
                 }
             }
@@ -234,6 +212,7 @@ void SvgRenderer::setSource(const QUrl &source)
             // Load local file if we have a path
             if (!path.isEmpty() && !renderer->load(path, opts)) {
                 errMsg = renderer->errorString();
+                emit loadResultSignal(errMsg);
                 return;
             }
 
@@ -243,8 +222,12 @@ void SvgRenderer::setSource(const QUrl &source)
                 if (errMsg.isEmpty()) {
                     errMsg = tr("SVG file is empty or invalid");
                 }
+                emit loadResultSignal(errMsg);
                 return;
             }
+
+            // Get SVG size
+            imageSize = renderer->defaultSize();
 
             // Render the SVG to an image
             QMutexLocker locker(&m_mutex);
@@ -252,39 +235,15 @@ void SvgRenderer::setSource(const QUrl &source)
             // Store renderer for future access
             m_renderer = std::move(renderer);
 
-            // Get SVG size
-            m_imageSize = m_renderer->defaultSize();
-
             // Render to image at original size
-            result = m_renderer->renderToImage(m_imageSize);
+            result = m_renderer->renderToImage(imageSize);
+
+            // Emit signal with results (will be handled on main thread)
+            emit imageLoadedSignal(result, imageSize);
         } catch (const std::exception &e) {
             errMsg = tr("Exception while loading SVG: %1").arg(e.what());
+            emit loadResultSignal(errMsg);
         }
-
-        // Handle results on the main thread
-        QMetaObject::invokeMethod(this, [this, errMsg, result]() {
-            // Reset loading state
-            m_loading = false;
-            emit loadingChanged();
-
-            if (!errMsg.isEmpty()) {
-                // Handle error
-                m_errorMsg = errMsg;
-                emit errorMessageChanged();
-                emit loadFailed(errMsg);
-            } else {
-                // Store successful result
-                QMutexLocker locker(&m_mutex);
-                m_image = result;
-                m_errorMsg.clear();
-
-                emit loadSucceeded();
-                emit imageSizeChanged();
-                update();
-            }
-
-            emit renderFinished();
-        });
     });
 
     // Set up watcher to automatically delete itself when done
@@ -317,6 +276,7 @@ void SvgRenderer::loadDataFromBase64(const QString &dataBase64)
     m_renderFuture = QtConcurrent::run([this, data]() {
         QString errMsg;
         QImage result;
+        QSize imageSize;
 
         try {
             // Create a local renderer instance
@@ -331,6 +291,7 @@ void SvgRenderer::loadDataFromBase64(const QString &dataBase64)
             // Load the SVG from data
             if (!renderer->load(data, opts)) {
                 errMsg = renderer->errorString();
+                emit loadResultSignal(errMsg);
                 return;
             }
 
@@ -340,6 +301,7 @@ void SvgRenderer::loadDataFromBase64(const QString &dataBase64)
                 if (errMsg.isEmpty()) {
                     errMsg = tr("SVG data is empty or invalid");
                 }
+                emit loadResultSignal(errMsg);
                 return;
             }
 
@@ -350,38 +312,17 @@ void SvgRenderer::loadDataFromBase64(const QString &dataBase64)
             m_renderer = std::move(renderer);
 
             // Get SVG size
-            m_imageSize = m_renderer->defaultSize();
+            imageSize = m_renderer->defaultSize();
 
             // Render to image at original size
-            result = m_renderer->renderToImage(m_imageSize);
+            result = m_renderer->renderToImage(imageSize);
+
+            // Emit signal with results (will be handled on main thread)
+            emit imageLoadedSignal(result, imageSize);
         } catch (const std::exception &e) {
             errMsg = tr("Exception while loading SVG: %1").arg(e.what());
+            emit loadResultSignal(errMsg);
         }
-
-        // Handle results on the main thread
-        QMetaObject::invokeMethod(this, [this, errMsg, result]() {
-            // Reset loading state
-            m_loading = false;
-            emit loadingChanged();
-
-            if (!errMsg.isEmpty()) {
-                // Handle error
-                m_errorMsg = errMsg;
-                emit errorMessageChanged();
-                emit loadFailed(errMsg);
-            } else {
-                // Store successful result
-                QMutexLocker locker(&m_mutex);
-                m_image = result;
-                m_errorMsg.clear();
-
-                emit loadSucceeded();
-                emit imageSizeChanged();
-                update();
-            }
-
-            emit renderFinished();
-        });
     });
 
     // Set up watcher to automatically delete itself when done
@@ -429,10 +370,50 @@ void SvgRenderer::handleLoadResult(const QString &errMsg)
     update();
 }
 
+void SvgRenderer::handleImageLoaded(const QImage &image, const QSize &size)
+{
+    // Reset loading state
+    m_loading = false;
+    emit loadingChanged();
+
+    // Store successful result
+    QMutexLocker locker(&m_mutex);
+    m_image = image;
+    m_imageSize = size;
+    m_errorMsg.clear();
+
+    emit loadSucceeded();
+    emit imageSizeChanged();
+    emit renderFinished();
+    update();
+}
+
 QRect SvgRenderer::viewBox() const
 {
     if (m_renderer) {
         return m_renderer->viewBox();
     }
     return QRect();
+}
+
+QImage SvgRenderer::generateCheckerboardTexture() const
+{
+    QImage texture(CHECKERBOARD_SIZE * 2, CHECKERBOARD_SIZE * 2, QImage::Format_ARGB32);
+    texture.fill(Qt::transparent);
+
+    QPainter painter(&texture);
+    QColor dark(220, 220, 220);
+    QColor light(255, 255, 255);
+
+    // Draw checker pattern
+    painter.fillRect(0, 0, CHECKERBOARD_SIZE, CHECKERBOARD_SIZE, light);
+    painter.fillRect(CHECKERBOARD_SIZE, 0, CHECKERBOARD_SIZE, CHECKERBOARD_SIZE, dark);
+    painter.fillRect(0, CHECKERBOARD_SIZE, CHECKERBOARD_SIZE, CHECKERBOARD_SIZE, dark);
+    painter.fillRect(CHECKERBOARD_SIZE,
+                     CHECKERBOARD_SIZE,
+                     CHECKERBOARD_SIZE,
+                     CHECKERBOARD_SIZE,
+                     light);
+
+    return texture;
 }
