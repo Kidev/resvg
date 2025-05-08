@@ -1,0 +1,132 @@
+cmake_minimum_required(VERSION 3.20)
+
+project(
+    ViewSVG
+    VERSION 1.0.0
+    LANGUAGES CXX
+)
+
+file(GLOB_RECURSE SOURCES_CPP src/*.cpp)
+file(GLOB_RECURSE SOURCES_HPP src/*.hpp)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+find_package(
+    Qt6 REQUIRED
+    COMPONENTS Core
+               Gui
+               Quick
+               Qml
+               QuickControls2
+               Concurrent
+)
+
+qt_standard_project_setup(REQUIRES 6.8)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(RESVG_LIB_PATH "${CMAKE_SOURCE_DIR}/../../target/debug")
+else ()
+    set(RESVG_LIB_PATH "${CMAKE_SOURCE_DIR}/../../target/release")
+endif ()
+
+qt_add_executable(${PROJECT_NAME} ${SOURCES_CPP} ${SOURCES_HPP})
+
+add_subdirectory(qml)
+
+# Include directories - private since these are implementation details
+target_include_directories(
+    ${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/../../crates/c-api
+)
+
+# Platform-specific configuration
+if (WIN32)
+    # Additional Windows-specific properties
+    set_target_properties(
+        ${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE VS_DEBUGGER_WORKING_DIRECTORY
+                                                         "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+    )
+
+    # Windows system libraries
+    set(
+        PLATFORM_LIBS
+        Ws2_32
+        Advapi32
+        Bcrypt
+        Userenv
+        Ntdll
+    )
+
+    # Windows resvg library
+    set(RESVG_LIB "${RESVG_LIB_PATH}/resvg.lib")
+    target_compile_options(${PROJECT_NAME} PUBLIC /W4 /WX)
+elseif (APPLE)
+    # macOS specific settings
+    set_target_properties(
+        ${PROJECT_NAME}
+        PROPERTIES MACOSX_BUNDLE TRUE
+                   MACOSX_BUNDLE_INFO_PLIST "${CMAKE_SOURCE_DIR}/resources/Info.plist"
+                   MACOSX_BUNDLE_BUNDLE_NAME "ViewSVG"
+                   MACOSX_BUNDLE_GUI_IDENTIFIER "com.resvg.viewsvg"
+                   MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
+    )
+
+    # macOS resvg library
+    if (EXISTS "${RESVG_LIB_PATH}/libresvg.a")
+        set(RESVG_LIB "${RESVG_LIB_PATH}/libresvg.a")
+    else ()
+        set(RESVG_LIB "${RESVG_LIB_PATH}/libresvg.dylib")
+    endif ()
+    target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Werror -Wpedantic)
+else ()
+    # Linux/Unix specific settings
+    set_target_properties(
+        ${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+    )
+
+    # Linux resvg library
+    if (EXISTS "${RESVG_LIB_PATH}/libresvg.a")
+        set(RESVG_LIB "${RESVG_LIB_PATH}/libresvg.a")
+    else ()
+        set(RESVG_LIB "${RESVG_LIB_PATH}/libresvg.so")
+    endif ()
+    target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Werror -Wpedantic)
+endif ()
+
+# Check if resvg library exists
+if (NOT EXISTS "${RESVG_LIB}")
+    message(FATAL_ERROR "Could not find resvg library at ${RESVG_LIB}")
+endif ()
+
+# Link libraries in a unified way
+target_link_libraries(
+    ${PROJECT_NAME}
+    PRIVATE Qt6::Core
+            Qt6::Gui
+            Qt6::Quick
+            Qt6::Qml
+            Qt6::QuickControls2
+            Qt6::Concurrent
+            ${RESVG_LIB}
+            ${PLATFORM_LIBS}
+)
+
+# Install directives with proper component structure
+include(GNUInstallDirs)
+
+install(
+    TARGETS ${PROJECT_NAME}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    BUNDLE DESTINATION .
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+qt_generate_deploy_qml_app_script(
+    TARGET ${PROJECT_NAME}
+    OUTPUT_SCRIPT deploy_script
+    MACOS_BUNDLE_POST_BUILD NO_UNSUPPORTED_PLATFORM_ERROR
+    DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
+)
+install(SCRIPT ${deploy_script})
