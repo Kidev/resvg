@@ -1,6 +1,7 @@
 name: "ViewSVG Release"
 
 on:
+  push:
   workflow_dispatch:
     inputs:
       release_tag:
@@ -127,7 +128,7 @@ jobs:
 
           # Add library path to environment
           export LD_LIBRARY_PATH=AppDir/usr/lib:$LD_LIBRARY_PATH
-          export QML_SOURCES_PATHS=$(pwd)/bin/qml
+          export QML_SOURCES_PATHS=$(pwd)/build/qml
 
           # Create AppImage with library path
           export OUTPUT=viewsvg-x86_64.AppImage
@@ -209,7 +210,7 @@ jobs:
 
           mkdir viewsvg-bin
           cp build/viewsvg.exe viewsvg-bin/viewsvg.exe
-          windeployqt --no-translations --qmldir=qml viewsvg-bin/viewsvg.exe
+          windeployqt --no-translations --qmldir=build/qml viewsvg-bin/viewsvg.exe
           cd viewsvg-bin
           7z a -tzip -mx9 viewsvg-win64.zip *
 
@@ -283,7 +284,7 @@ jobs:
 
           cmake --build build
           cmake --install build
-          macdeployqt viewsvg.app -qmldir=qml
+          macdeployqt build/viewsvg.app -qmldir=build/qml
           rm -r viewsvg.app/Contents/Plugins/iconengines
           rm -r viewsvg.app/Contents/Plugins/imageformats
           7z a -tzip -mx9 viewsvg-macos-x86_64.zip viewsvg.app
