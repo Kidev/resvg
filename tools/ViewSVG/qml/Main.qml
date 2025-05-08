@@ -5,7 +5,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import Qt.labs.platform as Platform
-import SvgViewer 1.0
 
 ApplicationWindow {
     id: window
@@ -80,8 +79,6 @@ ApplicationWindow {
                     id: sizeComboBox
 
                     Material.background: Material.LightGrey
-
-                    // Material styling
                     Material.foreground: Material.Grey
                     currentIndex: 1
                     model: ["Original", "Fit to View"]
@@ -102,8 +99,6 @@ ApplicationWindow {
                     id: backgroundComboBox
 
                     Material.background: Material.LightGrey
-
-                    // Material styling
                     Material.foreground: Material.Grey
                     currentIndex: 1
                     model: ["None", "White", "Check board"]
@@ -115,15 +110,13 @@ ApplicationWindow {
             CheckBox {
                 id: borderCheckBox
 
-                // Material styling
                 Material.accent: Material.LightBlue
-                text: "Draw border"
 
                 contentItem: Text {
                     color: "white"
                     font: borderCheckBox.font
                     leftPadding: borderCheckBox.indicator.width + 4
-                    text: borderCheckBox.text
+                    text: "Draw border"
                     verticalAlignment: Text.AlignVCenter
                 }
 
@@ -152,8 +145,6 @@ ApplicationWindow {
             }
 
             Button {
-
-                // Material styling
                 Material.accent: Material.LightBlue
                 Material.background: Material.Blue
                 Material.foreground: "white"
@@ -208,7 +199,7 @@ ApplicationWindow {
         }
 
         // Connect signals
-        onLoadFailed: error => {
+        onLoadFailed: function (error) {
             errorDialog.errorMessage = error;
             errorDialog.open();
         }

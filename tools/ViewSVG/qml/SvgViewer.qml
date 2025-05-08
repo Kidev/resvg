@@ -2,14 +2,13 @@ import QtQuick
 import QtQuick.Controls.Material
 import QtQuick.Controls
 import QtQuick.Layouts
-import ViewSVG.SvgViewer 1.0
+import SvgViewer 1.0
 
 Item {
     id: root
 
-    property alias renderer: renderer
-
     // Public properties (interface)
+    property alias renderer: renderer
     property alias source: renderer.source
 
     // Signals
@@ -21,7 +20,7 @@ Item {
     states: [
         State {
             name: "empty"
-            when: !renderer.loading && renderer.source === ""
+            when: !renderer.loading && renderer.source.toString() === ""
         },
         State {
             name: "loading"
@@ -29,7 +28,7 @@ Item {
         },
         State {
             name: "loaded"
-            when: !renderer.loading && renderer.source !== ""
+            when: !renderer.loading && renderer.source.toString() !== ""
         }
     ]
 
@@ -70,7 +69,9 @@ Item {
         anchors.fill: parent
 
         // Connect signals
-        onLoadFailed: error => root.loadFailed(error)
+        onLoadFailed: function (error) {
+            root.loadFailed(error);
+        }
         onLoadSucceeded: console.debug("SVG loaded successfully")
         onRenderFinished: console.debug("SVG rendering finished")
         onRenderStarted: console.debug("SVG rendering started")
@@ -192,7 +193,7 @@ Item {
 
         anchors.fill: parent
 
-        onDropped: drop => {
+        onDropped: function (drop) {
             dropHighlight.visible = false;
 
             if (drop.hasUrls) {
@@ -205,7 +206,7 @@ Item {
                 }
             }
         }
-        onEntered: drag => {
+        onEntered: function (drag) {
             drag.accept(Qt.CopyAction);
             dropHighlight.visible = true;
         }
