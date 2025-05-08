@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ResvgQt.h"
+#include <QBrush>
 #include <QFuture>
 #include <QImage>
 #include <QMutex>
@@ -58,6 +59,9 @@ public:
     // Methods
     void loadDataFromBase64(const QString &dataBase64);
 
+    // Constants
+    const QBrush CHECKBOARD_BRUSH;
+
 signals:
     void fitToViewChanged();
     void backgroundChanged();
@@ -86,8 +90,6 @@ private slots:
     void handleImageLoaded(const QImage &image, const QSize &size);
 
 private:
-    QImage generateCheckerboardTexture() const;
-
     // Core SVG rendering components
     ResvgOptions m_options;
     std::unique_ptr<ResvgRenderer> m_renderer;
@@ -108,5 +110,7 @@ private:
     QFuture<void> m_renderFuture;
 
     // Constants
-    static constexpr int CHECKERBOARD_SIZE{20};
+    static constexpr int CHECKBOARD_SIZE{20};
 };
+
+inline const QImage generateCheckerboardTexture(int size);
