@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Release tag to append binaries to (e.g. v0.30.0, leave empty for latest)'
+        description: 'Target release tag (empty for latest)'
         required: false
         type: string
         default: ''
@@ -124,6 +124,7 @@ jobs:
 
           # Add library path to environment
           export LD_LIBRARY_PATH=AppDir/usr/lib:$LD_LIBRARY_PATH
+          export QML_SOURCES_PATHS=$(pwd)/qml
 
           # Create AppImage with library path
           export OUTPUT=viewsvg-x86_64.AppImage
