@@ -1,6 +1,16 @@
 cmake_minimum_required(VERSION 3.22)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/functions.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/vars.cmake")
+
+# IMPORTANT: Handle custom Qt path before finding packages
+if(DEFINED QT_ROOT AND NOT "${QT_ROOT}" STREQUAL "")
+    set(CMAKE_PREFIX_PATH "${QT_ROOT};${CMAKE_PREFIX_PATH}")
+    message(STATUS "Using custom Qt path: ${QT_ROOT}")
+elseif(DEFINED ENV{QT_ROOT} AND NOT "$ENV{QT_ROOT}" STREQUAL "")
+    set(CMAKE_PREFIX_PATH "$ENV{QT_ROOT};${CMAKE_PREFIX_PATH}")
+    message(STATUS "Using custom Qt path from environment: $ENV{QT_ROOT}")
+endif()
 
 project(
     ${PROJECT_TITLE}
@@ -26,14 +36,16 @@ find_library(
 
 qt_standard_project_setup(REQUIRES 6.8)
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/env.cmake")
+
 qt_add_executable(${PROJECT_NAME} ${SOURCES_CPP} ${SOURCES_HPP})
 
 qt_add_qml_module(
     ${PROJECT_NAME_QML}
     URI "qml"
-    # VERSION 1.0
     QML_FILES ${SOURCES_QML}
-    RESOURCE_PREFIX "/qt/qml" OUTPUT_DIRECTORY "qml"
+    RESOURCE_PREFIX "/qt/qml"
+    OUTPUT_DIRECTORY "qml"
 )
 
 target_include_directories(
@@ -58,4 +70,6 @@ elseif (APPLE)
     include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/macos.cmake")
 elseif (UNIX)
     include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/linux.cmake")
+else ()
+    message(FATAL_ERROR "Unknown platform")
 endif ()
