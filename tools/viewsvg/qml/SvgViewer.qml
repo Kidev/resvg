@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Material
 import QtQuick.Controls
-import SvgViewer 1.0
+import SvgViewer
 
 Item {
     id: root
