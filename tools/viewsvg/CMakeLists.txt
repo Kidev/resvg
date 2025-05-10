@@ -3,14 +3,8 @@ cmake_minimum_required(VERSION 3.22)
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/functions.cmake")
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/vars.cmake")
 
-# IMPORTANT: Handle custom Qt path before finding packages
-if(DEFINED QT_ROOT AND NOT "${QT_ROOT}" STREQUAL "")
-    set(CMAKE_PREFIX_PATH "${QT_ROOT};${CMAKE_PREFIX_PATH}")
-    message(STATUS "Using custom Qt path: ${QT_ROOT}")
-elseif(DEFINED ENV{QT_ROOT} AND NOT "$ENV{QT_ROOT}" STREQUAL "")
-    set(CMAKE_PREFIX_PATH "$ENV{QT_ROOT};${CMAKE_PREFIX_PATH}")
-    message(STATUS "Using custom Qt path from environment: $ENV{QT_ROOT}")
-endif()
+resolve_env_or_var(QT_ROOT_DIR "" QT_INSTALL_DIR)
+set(CMAKE_PREFIX_PATH "${QT_INSTALL_DIR};${CMAKE_PREFIX_PATH}")
 
 project(
     ${PROJECT_TITLE}
@@ -63,6 +57,22 @@ target_link_libraries(
            Qt6::Concurrent
            ${RESVG_LIB}
 )
+
+install(
+    TARGETS ${PROJECT_NAME}
+    BUNDLE DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+qt_generate_deploy_qml_app_script(
+    TARGET ${PROJECT_NAME}
+    OUTPUT_SCRIPT deploy_script
+    MACOS_BUNDLE_POST_BUILD NO_UNSUPPORTED_PLATFORM_ERROR
+    DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
+)
+
+install(SCRIPT ${deploy_script})
 
 if (WIN32)
     include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/windows.cmake")

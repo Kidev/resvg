@@ -1,13 +1,19 @@
-    set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
-    target_compile_options(${PROJECT_NAME} PUBLIC /W4 /WX)
-    get_target_property(_qmake_executable Qt6::qmake IMPORTED_LOCATION)
-    get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
-    find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
+set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE TRUE)
+target_compile_options(${PROJECT_NAME} PUBLIC /W4 /WX)
 
-    add_custom_command(
-        TARGET ${PROJECT_NAME}
-        POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E env PATH="${_qt_bin_dir}" "${WINDEPLOYQT_EXECUTABLE}"
-                "$<TARGET_FILE:${PROJECT_NAME}>" --qmldir=${CMAKE_SOURCE_DIR}/qml
-        COMMENT "Running windeployqt..."
-    )
+# Since PATH already includes QT_INSTALL_DIR/bin, we can find windeployqt without hints
+find_program(WINDEPLOYQT_EXECUTABLE windeployqt)
+
+if(NOT WINDEPLOYQT_EXECUTABLE)
+    message(FATAL_ERROR "windeployqt not found")
+endif()
+
+# Generate the installation script using configure_file
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/templates/post_install_windows.cmake.in"
+    "${CMAKE_BINARY_DIR}/post_install_windows.cmake"
+    @ONLY
+)
+
+# Install the post-install script to run after installation
+install(SCRIPT "${CMAKE_BINARY_DIR}/post_install_windows.cmake")

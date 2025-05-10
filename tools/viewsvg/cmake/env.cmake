@@ -1,13 +1,7 @@
-get_target_property(_qmake_executable Qt6::qmake IMPORTED_LOCATION)
-get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
-cmake_path(GET _qt_bin_dir PARENT_PATH _qt_root_dir)
-
-resolve_env_or_var(QT_ROOT_DIR ${_qt_root_dir} QT_INSTALL_DIR)
 resolve_env_or_var(QT_QML_SOURCES "${CMAKE_SOURCE_DIR}/qml" QML_SOURCES_PATHS)
 
 # Make sure to set these in CMAKE_ENVIRONMENT_PATH_INSTALL to influence Qt's tools
 set(CMAKE_ENVIRONMENT_PATH_INSTALL "${QT_INSTALL_DIR}/bin")
-set(QT_QMAKE_EXECUTABLE "${_qmake_executable}")
 set(QT_INSTALL_QML "${QT_INSTALL_DIR}/qml")
 set(QT_INSTALL_PLUGINS "${QT_INSTALL_DIR}/plugins")
 

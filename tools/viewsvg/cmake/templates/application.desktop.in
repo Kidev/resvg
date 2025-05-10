@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=ViewSVG
+Comment=Simple SVG viewer
+Exec=@PROJECT_NAME@
+Icon=@PROJECT_NAME@
+Categories=Graphics;Viewer;Qt;

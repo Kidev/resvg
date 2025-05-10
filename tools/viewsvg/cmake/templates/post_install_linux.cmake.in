@@ -1,0 +1,71 @@
+# Variables needed for post-install processing
+set(PROJECT_NAME "@PROJECT_NAME@")
+set(APPDIR "@APPDIR@")
+set(CMAKE_BINARY_DIR "@CMAKE_BINARY_DIR@")
+set(CMAKE_SOURCE_DIR "@CMAKE_SOURCE_DIR@")
+set(CMAKE_INSTALL_BINDIR "@CMAKE_INSTALL_BINDIR@")
+set(LINUXDEPLOY_DOWNLOAD "@LINUXDEPLOY_DOWNLOAD@")
+set(LINUXDEPLOY_QT_DOWNLOAD "@LINUXDEPLOY_QT_DOWNLOAD@")
+set(QT_INSTALL_DIR "@QT_INSTALL_DIR@")
+set(QML_SOURCES_PATHS "@QML_SOURCES_PATHS@")
+
+# Create AppDir directory structure
+file(MAKE_DIRECTORY "${APPDIR}/usr/bin")
+file(MAKE_DIRECTORY "${APPDIR}/usr/share/applications")
+file(MAKE_DIRECTORY "${APPDIR}/usr/share/icons/hicolor/256x256/apps")
+
+# Copy executable from install directory to AppDir
+file(COPY
+    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME}"
+    DESTINATION "${APPDIR}/usr/bin/"
+    FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                     GROUP_READ GROUP_EXECUTE
+                     WORLD_READ WORLD_EXECUTE
+)
+
+# Copy the pre-generated .desktop file to AppDir
+file(COPY
+    "${CMAKE_BINARY_DIR}/application.desktop"
+    DESTINATION "${APPDIR}/usr/share/applications/"
+    FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+)
+file(RENAME
+    "${APPDIR}/usr/share/applications/application.desktop"
+    "${APPDIR}/usr/share/applications/${PROJECT_NAME}.desktop"
+)
+
+# Copy icon if it exists
+if(EXISTS "${CMAKE_SOURCE_DIR}/viewsvg.png")
+    file(COPY "${CMAKE_SOURCE_DIR}/viewsvg.png"
+         DESTINATION "${APPDIR}/usr/share/icons/hicolor/256x256/apps/"
+         FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+    file(RENAME
+         "${APPDIR}/usr/share/icons/hicolor/256x256/apps/viewsvg.png"
+         "${APPDIR}/usr/share/icons/hicolor/256x256/apps/${PROJECT_NAME}.png")
+endif()
+
+# Make the deployment script executable (it was generated from template)
+execute_process(
+    COMMAND chmod +x "${CMAKE_BINARY_DIR}/run_linuxdeploy.sh"
+    RESULT_VARIABLE CHMOD_RESULT
+)
+
+if(NOT CHMOD_RESULT EQUAL 0)
+    message(WARNING "Failed to make linuxdeploy script executable")
+endif()
+
+# Run the deployment script
+message(STATUS "Running linuxdeploy to create AppImage...")
+execute_process(
+    COMMAND "${CMAKE_BINARY_DIR}/run_linuxdeploy.sh"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+    RESULT_VARIABLE DEPLOY_RESULT
+    OUTPUT_VARIABLE DEPLOY_OUTPUT
+    ERROR_VARIABLE DEPLOY_ERROR
+)
+
+if(NOT DEPLOY_RESULT EQUAL 0)
+    message(WARNING "AppImage creation failed with error: ${DEPLOY_ERROR}")
+else()
+    message(STATUS "AppImage creation completed successfully")
+endif()

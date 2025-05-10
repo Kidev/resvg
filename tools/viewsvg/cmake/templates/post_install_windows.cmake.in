@@ -1,0 +1,25 @@
+# Simple post-install script for Windows
+# Variables substituted by configure_file
+set(PROJECT_NAME "@PROJECT_NAME@")
+set(CMAKE_INSTALL_BINDIR "@CMAKE_INSTALL_BINDIR@")
+set(CMAKE_SOURCE_DIR "@CMAKE_SOURCE_DIR@")
+set(WINDEPLOYQT_EXECUTABLE "@WINDEPLOYQT_EXECUTABLE@")
+set(QT_INSTALL_DIR "@QT_INSTALL_DIR@")
+
+message(STATUS "Running windeployqt...")
+
+# Run windeployqt on the installed executable
+execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E env PATH="${QT_INSTALL_DIR}/bin"
+        "${WINDEPLOYQT_EXECUTABLE}" "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME}.exe"
+        --qmldir "${CMAKE_SOURCE_DIR}/qml"
+    RESULT_VARIABLE result
+    OUTPUT_VARIABLE output
+    ERROR_VARIABLE error
+)
+
+if(NOT result EQUAL 0)
+    message(WARNING "windeployqt failed: ${error}")
+else()
+    message(STATUS "windeployqt completed successfully")
+endif()
