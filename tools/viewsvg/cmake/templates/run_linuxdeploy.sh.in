@@ -1,0 +1,30 @@
+#!/bin/bash
+# Set up environment variables - explicitly use Qt6
+export QT_INSTALL_DIR="@QT_INSTALL_DIR@"
+export PATH="@QT_INSTALL_DIR@/bin:$PATH"
+export LD_LIBRARY_PATH="@QT_INSTALL_DIR@/lib:$LD_LIBRARY_PATH"
+export QML_SOURCES_PATHS="@QML_SOURCES_PATHS@"
+export OUTPUT="@PROJECT_NAME@-x86_64.AppImage"
+# Disable stripping to avoid errors with newer library formats
+export NO_STRIP=1
+
+echo "Using Qt6 from: @QT_INSTALL_DIR@"
+
+# First copy the Qt plugin to the expected location
+mkdir -p @CMAKE_BINARY_DIR@/plugins
+cp @LINUXDEPLOY_QT_DOWNLOAD@ @CMAKE_BINARY_DIR@/plugins/linuxdeploy-plugin-qt
+chmod +x @CMAKE_BINARY_DIR@/plugins/linuxdeploy-plugin-qt
+
+# Run linuxdeploy but redirect all error output to a log file
+@LINUXDEPLOY_DOWNLOAD@ --appdir=@APPDIR@ --plugin=qt --output=appimage 2> linuxdeploy-errors.log
+
+# Check if AppImage was created
+if [ -f "@PROJECT_NAME@-x86_64.AppImage" ]; then
+    echo "AppImage created successfully: @PROJECT_NAME@-x86_64.AppImage"
+    chmod +x @PROJECT_NAME@-x86_64.AppImage
+else
+    echo "WARNING: AppImage creation failed. See linuxdeploy-errors.log for details"
+fi
+
+# Always exit with success so the install continues
+exit 0

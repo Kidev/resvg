@@ -1,0 +1,28 @@
+# Simple post-install script for macOS
+# Variables substituted by configure_file
+set(PROJECT_NAME "@PROJECT_NAME@")
+set(CMAKE_INSTALL_BINDIR "@CMAKE_INSTALL_BINDIR@")
+set(CMAKE_SOURCE_DIR "@CMAKE_SOURCE_DIR@")
+set(MACDEPLOYQT_EXECUTABLE "@MACDEPLOYQT_EXECUTABLE@")
+set(QT_INSTALL_DIR "@QT_INSTALL_DIR@")
+
+message(STATUS "Running macdeployqt...")
+
+# macOS app bundle path is different - need to find the .app directory
+set(INSTALLED_APP "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME}.app")
+
+# Run macdeployqt on the installed app bundle
+execute_process(
+    COMMAND "${CMAKE_COMMAND}" -E env PATH="${QT_INSTALL_DIR}/bin"
+        "${MACDEPLOYQT_EXECUTABLE}" "${INSTALLED_APP}"
+        -qmldir "${CMAKE_SOURCE_DIR}/qml" -always-overwrite
+    RESULT_VARIABLE result
+    OUTPUT_VARIABLE output
+    ERROR_VARIABLE error
+)
+
+if(NOT result EQUAL 0)
+    message(WARNING "macdeployqt failed: ${error}")
+else()
+    message(STATUS "macdeployqt completed successfully")
+endif()
