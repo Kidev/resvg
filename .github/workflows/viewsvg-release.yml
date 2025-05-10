@@ -1,7 +1,6 @@
 name: "ViewSVG Release"
 
 on:
-  push:
   workflow_dispatch:
     inputs:
       release_tag:
@@ -80,11 +79,12 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          make QT_ROOT='/home/runner/work/resvg/Qt/6.8.3/gcc_64'
-          7z a -tzip -mx9 viewsvg-linux-x86_64.zip viewsvg-x86_64.AppImage
-
-      - name: Collect viewsvg binary
-        run: |
+          cmake -S . -B build \
+            -DVERSION_TAG="${{ needs.prepare-release.outputs.release_tag }}" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DQT_ROOT_DIR="$QT_ROOT_DIR"
+          cmake --build build
+          7z a -tzip -mx9 viewsvg-linux-x86_64.zip build/viewsvg-x86_64.AppImage
           mkdir -p bin
           cp tools/viewsvg/viewsvg-linux-x86_64.zip bin/
 
@@ -149,11 +149,12 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          make QT_ROOT='/home/runner/work/resvg/Qt/6.8.3/win64_msvc2022_64'
-          7z a -tzip -mx9 viewsvg-win64.zip *
-
-      - name: Collect
-        run: |
+          cmake -S . -B build \
+            -DVERSION_TAG="${{ needs.prepare-release.outputs.release_tag }}" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DQT_ROOT_DIR="$QT_ROOT_DIR"
+          cmake --build build
+          7z a -tzip -mx9 viewsvg-win64.zip build/*
           mkdir bin
           cp tools/viewsvg/viewsvg-bin/viewsvg-win64.zip bin/
 
@@ -218,11 +219,12 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          make QT_ROOT='/home/runner/work/resvg/Qt/6.8.3/clang_64'
-          7z a -tzip -mx9 viewsvg-macos-x86_64.zip viewsvg.app
-
-      - name: Collect
-        run: |
+          cmake -S . -B build \
+            -DVERSION_TAG="${{ needs.prepare-release.outputs.release_tag }}" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DQT_ROOT_DIR="$QT_ROOT_DIR"
+          cmake --build build
+          7z a -tzip -mx9 viewsvg-macos-x86_64.zip build/viewsvg.app
           mkdir bin
           cp tools/viewsvg/viewsvg-macos-x86_64.zip bin/
 
