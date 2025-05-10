@@ -85,6 +85,9 @@ jobs:
             -DQT_ROOT_DIR="$QT_ROOT_DIR"
           cmake --build build
           7z a -tzip -mx9 viewsvg-linux-x86_64.zip build/viewsvg-x86_64.AppImage
+
+      - name: Collect viewsvg binary
+        run: |
           mkdir -p bin
           cp tools/viewsvg/viewsvg-linux-x86_64.zip bin/
 
@@ -155,6 +158,9 @@ jobs:
             -DQT_ROOT_DIR="$QT_ROOT_DIR"
           cmake --build build
           7z a -tzip -mx9 viewsvg-win64.zip build/*
+
+      - name: Collect viewsvg binary
+        run: |
           mkdir bin
           cp tools/viewsvg/viewsvg-bin/viewsvg-win64.zip bin/
 
@@ -225,6 +231,9 @@ jobs:
             -DQT_ROOT_DIR="$QT_ROOT_DIR"
           cmake --build build
           7z a -tzip -mx9 viewsvg-macos-x86_64.zip build/viewsvg.app
+
+      - name: Collect viewsvg binary
+        run: |
           mkdir bin
           cp tools/viewsvg/viewsvg-macos-x86_64.zip bin/
 
