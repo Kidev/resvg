@@ -68,4 +68,17 @@ if(NOT DEPLOY_RESULT EQUAL 0)
     message(WARNING "AppImage creation failed with error: ${DEPLOY_ERROR}")
 else()
     message(STATUS "AppImage creation completed successfully")
+
+    # Install the created AppImage if it exists
+    set(APPIMAGE_FILE "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-x86_64.AppImage")
+    if(EXISTS "${APPIMAGE_FILE}")
+        message(STATUS "Installing AppImage to ${CMAKE_INSTALL_PREFIX}")
+        file(COPY "${APPIMAGE_FILE}"
+             DESTINATION "${CMAKE_INSTALL_PREFIX}"
+             FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                              GROUP_READ GROUP_EXECUTE
+                              WORLD_READ WORLD_EXECUTE)
+    else()
+        message(WARNING "AppImage file not found at ${APPIMAGE_FILE}")
+    endif()
 endif()

@@ -45,15 +45,3 @@ configure_file(
 
 # Install the post-install script to run after installation
 install(SCRIPT "${CMAKE_BINARY_DIR}/post_install_linux.cmake")
-
-# Also install the necessary scripts and tools for later use
-install(
-    FILES
-        ${LINUXDEPLOY_DOWNLOAD}
-        ${LINUXDEPLOY_QT_DOWNLOAD}
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-    PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE
-)
