@@ -80,7 +80,7 @@ jobs:
         working-directory: tools/viewsvg
         run: |
           cmake -S . -B build \
-            -DVERSION_TAG="${{ needs.prepare-release.outputs.release_tag }}" \
+            -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" \
             -DCMAKE_BUILD_TYPE=Release \
             -DQT_ROOT_DIR="$QT_ROOT_DIR"
           cmake --build build
@@ -150,7 +150,7 @@ jobs:
         working-directory: tools/viewsvg
         run: |
           cmake -S . -B build \
-            -DVERSION_TAG="${{ needs.prepare-release.outputs.release_tag }}" \
+            -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" \
             -DCMAKE_BUILD_TYPE=Release \
             -DQT_ROOT_DIR="$QT_ROOT_DIR"
           cmake --build build
@@ -220,7 +220,7 @@ jobs:
         working-directory: tools/viewsvg
         run: |
           cmake -S . -B build \
-            -DVERSION_TAG="${{ needs.prepare-release.outputs.release_tag }}" \
+            -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" \
             -DCMAKE_BUILD_TYPE=Release \
             -DQT_ROOT_DIR="$QT_ROOT_DIR"
           cmake --build build
