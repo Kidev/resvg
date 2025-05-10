@@ -79,12 +79,8 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B build \
-            -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DQT_ROOT_DIR="$QT_ROOT_DIR"
-          cmake --build build
-          7z a -tzip -mx9 viewsvg-linux-x86_64.zip build/viewsvg-x86_64.AppImage
+          make desktop VERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}"
+          7z a -tzip -mx9 viewsvg-linux-x86_64.zip install/viewsvg-x86_64.AppImage
 
       - name: Collect viewsvg binary
         run: |
@@ -152,12 +148,8 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B build \
-            -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DQT_ROOT_DIR="$QT_ROOT_DIR"
-          cmake --build build
-          7z a -tzip -mx9 viewsvg-win64.zip build/*
+          make desktop VERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}"
+          7z a -tzip -mx9 viewsvg-win64.zip install/*
 
       - name: Collect viewsvg binary
         run: |
@@ -225,12 +217,8 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          cmake -S . -B build \
-            -DVERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}" \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DQT_ROOT_DIR="$QT_ROOT_DIR"
-          cmake --build build
-          7z a -tzip -mx9 viewsvg-macos-x86_64.zip build/viewsvg.app
+          make desktop VERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}"
+          7z a -tzip -mx9 viewsvg-macos-x86_64.zip install/viewsvg.app
 
       - name: Collect viewsvg binary
         run: |
