@@ -12,6 +12,12 @@ project(
     LANGUAGES CXX
 )
 
+# Set default install prefix to local install directory if not specified
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install" CACHE PATH
+        "Default install directory" FORCE)
+endif()
+
 find_package(
     Qt6 REQUIRED
     COMPONENTS Core
@@ -31,6 +37,12 @@ find_library(
 qt_standard_project_setup(REQUIRES 6.8)
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/env.cmake")
+
+# Debug output for QML files
+message(STATUS "QML files found:")
+foreach(qml_file ${SOURCES_QML})
+    message(STATUS "  ${qml_file}")
+endforeach()
 
 qt_add_executable(${PROJECT_NAME} ${SOURCES_CPP} ${SOURCES_HPP})
 

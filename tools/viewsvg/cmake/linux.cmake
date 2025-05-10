@@ -44,4 +44,6 @@ configure_file(
 )
 
 # Install the post-install script to run after installation
+# Set the CMAKE_INSTALL_PREFIX as a script variable
+set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 install(SCRIPT "${CMAKE_BINARY_DIR}/post_install_linux.cmake")

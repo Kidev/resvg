@@ -9,21 +9,41 @@ set(LINUXDEPLOY_QT_DOWNLOAD "@LINUXDEPLOY_QT_DOWNLOAD@")
 set(QT_INSTALL_DIR "@QT_INSTALL_DIR@")
 set(QML_SOURCES_PATHS "@QML_SOURCES_PATHS@")
 
+# CMAKE_INSTALL_PREFIX is automatically set by the install command
+message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
+
+# Create a proper AppDir from the install directory
+message(STATUS "Creating AppDir from install directory: ${CMAKE_INSTALL_PREFIX}")
+
+# Remove any existing AppDir
+file(REMOVE_RECURSE "${APPDIR}")
+
 # Create AppDir directory structure
-file(MAKE_DIRECTORY "${APPDIR}/usr/bin")
+file(MAKE_DIRECTORY "${APPDIR}/usr")
+
+# Copy the entire install structure to AppDir/usr
+file(COPY "${CMAKE_INSTALL_PREFIX}/"
+     DESTINATION "${APPDIR}/usr/"
+     USE_SOURCE_PERMISSIONS
+     PATTERN "*.AppImage" EXCLUDE)  # Don't copy any existing AppImages
+
+# Generate the desktop file if it doesn't exist
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/application.desktop")
+    file(WRITE "${CMAKE_BINARY_DIR}/application.desktop"
+"[Desktop Entry]
+Type=Application
+Name=ViewSVG
+Comment=Simple SVG viewer
+Exec=${PROJECT_NAME}
+Icon=${PROJECT_NAME}
+Categories=Graphics;Viewer;Qt;
+")
+endif()
+
+# Create applications directory if it doesn't exist
 file(MAKE_DIRECTORY "${APPDIR}/usr/share/applications")
-file(MAKE_DIRECTORY "${APPDIR}/usr/share/icons/hicolor/256x256/apps")
 
-# Copy executable from install directory to AppDir
-file(COPY
-    "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/${PROJECT_NAME}"
-    DESTINATION "${APPDIR}/usr/bin/"
-    FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                     GROUP_READ GROUP_EXECUTE
-                     WORLD_READ WORLD_EXECUTE
-)
-
-# Copy the pre-generated .desktop file to AppDir
+# Copy the desktop file
 file(COPY
     "${CMAKE_BINARY_DIR}/application.desktop"
     DESTINATION "${APPDIR}/usr/share/applications/"
@@ -36,6 +56,7 @@ file(RENAME
 
 # Copy icon if it exists
 if(EXISTS "${CMAKE_SOURCE_DIR}/viewsvg.png")
+    file(MAKE_DIRECTORY "${APPDIR}/usr/share/icons/hicolor/256x256/apps")
     file(COPY "${CMAKE_SOURCE_DIR}/viewsvg.png"
          DESTINATION "${APPDIR}/usr/share/icons/hicolor/256x256/apps/"
          FILE_PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)

@@ -15,8 +15,23 @@ mkdir -p @CMAKE_BINARY_DIR@/plugins
 cp @LINUXDEPLOY_QT_DOWNLOAD@ @CMAKE_BINARY_DIR@/plugins/linuxdeploy-plugin-qt
 chmod +x @CMAKE_BINARY_DIR@/plugins/linuxdeploy-plugin-qt
 
-# Run linuxdeploy but redirect all error output to a log file
-@LINUXDEPLOY_DOWNLOAD@ --appdir=@APPDIR@ --plugin=qt --output=appimage 2> linuxdeploy-errors.log
+# Since we've already copied the full install to AppDir, we need to tell linuxdeploy
+# where to find the libraries. The install directory structure already includes everything.
+# We need to ensure linuxdeploy can find libresvg.so by adding the lib directory to LD_LIBRARY_PATH
+export LD_LIBRARY_PATH="@APPDIR@/usr/lib:$LD_LIBRARY_PATH"
+
+# Set up additional paths for linuxdeploy to find libraries
+export LIBRARY_PATH="@APPDIR@/usr/lib"
+
+# Run linuxdeploy with verbose output to see what it's doing
+@LINUXDEPLOY_DOWNLOAD@ \
+    --appdir=@APPDIR@ \
+    --plugin=qt \
+    --output=appimage \
+    --verbosity=1 \
+    -l@APPDIR@/usr/lib/libresvg.so \
+    -l@APPDIR@/usr/lib/libviewsvg_qml.so \
+    2> linuxdeploy-errors.log
 
 # Check if AppImage was created
 if [ -f "@PROJECT_NAME@-x86_64.AppImage" ]; then
@@ -24,6 +39,8 @@ if [ -f "@PROJECT_NAME@-x86_64.AppImage" ]; then
     chmod +x @PROJECT_NAME@-x86_64.AppImage
 else
     echo "WARNING: AppImage creation failed. See linuxdeploy-errors.log for details"
+    echo "Last 20 lines of error log:"
+    tail -n 20 linuxdeploy-errors.log
 fi
 
 # Always exit with success so the install continues
