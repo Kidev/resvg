@@ -1,0 +1,67 @@
+name: Build and Release
+
+# Will trigger when a commit is tagged 'v*' (v1.0.0 for example)
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      # Checkout your repo
+      - uses: actions/checkout@v4
+
+      # Install Qt
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4.2.1
+        with:
+          version: '6.8.3'
+
+      # Build and install your project
+      - name: Build project
+        run: |
+         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(readlink -f ./install)
+         cmake --build build
+         cmake --install build
+
+      # Package into .AppImage
+      - name: Create AppImage
+        id: appimage
+        uses: Kidev/qt-appimage@v1
+        with:
+          install_folder: './install'
+          app_name: 'MyApplication'
+          comment: 'An awesome Qt application'
+          category: 'Graphics'
+          icon: './icon.png'
+          binary: 'myapp'
+
+      # Extract version from the commit tag
+      - name: Get Version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      # Create release for version
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: MyApplication ${{ steps.get_version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+
+      # Upload AppImage into release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ steps.appimage.outputs.appimage }}
+          asset_name: MyApplication-${{ steps.get_version.outputs.VERSION }}.AppImage
+          asset_content_type: application/octet-stream
