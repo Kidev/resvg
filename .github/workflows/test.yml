@@ -21,6 +21,7 @@ jobs:
 
       # Build and install your project
       - name: Build project
+        working-directory: ./tools/viewsvg/
         run: |
          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(readlink -f ./install)
          cmake --build build
@@ -31,7 +32,7 @@ jobs:
         id: appimage
         uses: Kidev/qt-appimage@v0.0.1
         with:
-          install_folder: './install'
+          install_folder: '.tools/viewsvg/install'
           app_name: 'MyApplication'
           comment: 'An awesome Qt application'
           category: 'Graphics'
