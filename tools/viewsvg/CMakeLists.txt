@@ -1,25 +1,12 @@
 cmake_minimum_required(VERSION 3.22)
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/functions.cmake")
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/vars.cmake")
-
-resolve_env_or_var(QT_ROOT_DIR "" QT_INSTALL_DIR)
-set(CMAKE_PREFIX_PATH "${QT_INSTALL_DIR};${CMAKE_PREFIX_PATH}")
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/config.cmake")
 
 project(
-    ${PROJECT_TITLE}
+    viewsvg
     VERSION ${PROJECT_VERSION}
     LANGUAGES CXX
 )
-
-# Set default install prefix to local install directory if not specified
-if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(
-        CMAKE_INSTALL_PREFIX
-        "${CMAKE_CURRENT_SOURCE_DIR}/install"
-        CACHE PATH "Default install directory" FORCE
-    )
-endif ()
 
 find_package(
     Qt6 REQUIRED
@@ -32,25 +19,17 @@ find_package(
 )
 
 find_library(
-    RESVG_LIB resvg
+    RESVG_LIB ${RESVG_LIB_NAME}
     PATHS ${RESVG_LIB_PATH}
     NO_DEFAULT_PATH REQUIRED
 )
 
 qt_standard_project_setup(REQUIRES 6.8)
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/env.cmake")
-
-# Debug output for QML files
-message(STATUS "QML files found:")
-foreach (qml_file ${SOURCES_QML})
-    message(STATUS "  ${qml_file}")
-endforeach ()
-
 qt_add_executable(${PROJECT_NAME} ${SOURCES_CPP} ${SOURCES_HPP})
 
 qt_add_qml_module(
-    ${PROJECT_NAME_QML}
+    ${PROJECT_NAME}
     URI "qml"
     QML_FILES ${SOURCES_QML}
     RESOURCE_PREFIX "/qt/qml"
@@ -58,13 +37,12 @@ qt_add_qml_module(
 )
 
 target_include_directories(
-    ${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${RESVG_ROOT_PATH}/crates/c-api
+    ${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${RESVG_INC_PATH}
 )
 
 target_link_libraries(
     ${PROJECT_NAME}
-    PUBLIC ${PROJECT_NAME_QML}
-           Qt6::Core
+    PUBLIC Qt6::Core
            Qt6::Gui
            Qt6::Quick
            Qt6::Qml
@@ -72,6 +50,8 @@ target_link_libraries(
            Qt6::Concurrent
            ${RESVG_LIB}
 )
+
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/compilers.cmake")
 
 install(
     TARGETS ${PROJECT_NAME}
@@ -90,14 +70,3 @@ qt_generate_deploy_qml_app_script(
 )
 
 install(SCRIPT ${deploy_script})
-
-if (WIN32)
-    include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/windows.cmake")
-elseif (APPLE)
-    include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/macos.cmake")
-elseif (UNIX)
-    target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Werror -Wpedantic)
-    # include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/linux.cmake")
-else ()
-    message(FATAL_ERROR "Unknown platform")
-endif ()
