@@ -2,6 +2,6 @@
 Type=Application
 Name=ViewSVG
 Comment=Simple SVG viewer
-Exec=@PROJECT_NAME@
-Icon=@PROJECT_NAME@
+Exec=../../bin/@PROJECT_NAME@
+Icon=../icons/hicolor/256x256/apps/@PROJECT_NAME@.png
 Categories=Graphics;Viewer;Qt;

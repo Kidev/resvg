@@ -30,8 +30,7 @@ export LIBRARY_PATH="@APPDIR@/usr/lib"
     --output=appimage \
     --verbosity=1 \
     -l@APPDIR@/usr/lib/libresvg.so \
-    -l@APPDIR@/usr/lib/libviewsvg_qml.so \
-    2> linuxdeploy-errors.log
+    -l@APPDIR@/usr/lib/libviewsvg_qml.so
 
 # Check if AppImage was created
 if [ -f "@PROJECT_NAME@-x86_64.AppImage" ]; then
