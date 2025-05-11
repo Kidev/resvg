@@ -16,7 +16,10 @@ jobs:
       # Extract version from the commit tag
       - name: Get Version
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: |
+          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          STRIPPED_TAG="${LATEST_RELEASE#v}"
+          echo "NO_V_VERSION=${STRIPPED_TAG}" >> $GITHUB_OUTPUT
 
       - name: Build C API
         working-directory: crates/c-api
@@ -32,7 +35,7 @@ jobs:
       - name: Build project
         working-directory: tools/viewsvg
         run: |
-         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(readlink -f ./install) -DVERSION_TAG=${{ steps.get_version.outputs.VERSION }}
+         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(readlink -f ./install) -DVERSION_TAG=${{ steps.get_version.outputs.NO_V_VERSION }}
          cmake --build build
          cmake --install build
 
