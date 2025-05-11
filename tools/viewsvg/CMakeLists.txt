@@ -13,10 +13,13 @@ project(
 )
 
 # Set default install prefix to local install directory if not specified
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/install" CACHE PATH
-        "Default install directory" FORCE)
-endif()
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(
+        CMAKE_INSTALL_PREFIX
+        "${CMAKE_CURRENT_SOURCE_DIR}/install"
+        CACHE PATH "Default install directory" FORCE
+    )
+endif ()
 
 find_package(
     Qt6 REQUIRED
@@ -40,9 +43,9 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/env.cmake")
 
 # Debug output for QML files
 message(STATUS "QML files found:")
-foreach(qml_file ${SOURCES_QML})
+foreach (qml_file ${SOURCES_QML})
     message(STATUS "  ${qml_file}")
-endforeach()
+endforeach ()
 
 qt_add_executable(${PROJECT_NAME} ${SOURCES_CPP} ${SOURCES_HPP})
 
@@ -94,7 +97,7 @@ elseif (APPLE)
     include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/macos.cmake")
 elseif (UNIX)
     target_compile_options(${PROJECT_NAME} PUBLIC -Wall -Werror -Wpedantic)
-    #include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/linux.cmake")
+    # include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/linux.cmake")
 else ()
     message(FATAL_ERROR "Unknown platform")
 endif ()

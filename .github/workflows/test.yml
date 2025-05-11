@@ -13,6 +13,15 @@ jobs:
       # Checkout your repo
       - uses: actions/checkout@v4
 
+      # Extract version from the commit tag
+      - name: Get Version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build C API
+        working-directory: crates/c-api
+        run: cargo build --release
+
       # Install Qt
       - name: Install Qt
         uses: jurplel/install-qt-action@v4.2.1
@@ -21,9 +30,9 @@ jobs:
 
       # Build and install your project
       - name: Build project
-        working-directory: ./tools/viewsvg/
+        working-directory: tools/viewsvg
         run: |
-         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(readlink -f ./install)
+         cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$(readlink -f ./install) -DVERSION_TAG=${{ steps.get_version.outputs.VERSION }}
          cmake --build build
          cmake --install build
 
@@ -32,17 +41,12 @@ jobs:
         id: appimage
         uses: Kidev/qt-appimage@v0.0.1
         with:
-          install_folder: '.tools/viewsvg/install'
+          install_folder: 'tools/viewsvg/install'
           app_name: 'MyApplication'
           comment: 'An awesome Qt application'
           category: 'Graphics'
           icon: './icon.png'
           binary: 'myapp'
-
-      # Extract version from the commit tag
-      - name: Get Version
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       # Create release for version
       - name: Create Release

@@ -1,8 +1,20 @@
 set(PROJECT_TITLE "viewsvg")
 
-if (DEFINED VERSION_TAG AND NOT "${VERSION_TAG}" STREQUAL "")
-    set(PROJECT_VERSION "${VERSION_TAG}" )
-elseif (DEFINED ENV{VERSION_TAG} AND NOT "$ENV{VERSION_TAG}" STREQUAL "")
+if (
+    DEFINED VERSION_TAG
+    AND NOT
+        "${VERSION_TAG}"
+        STREQUAL
+        ""
+)
+    set(PROJECT_VERSION "${VERSION_TAG}")
+elseif (
+    DEFINED ENV{VERSION_TAG}
+    AND NOT
+        "$ENV{VERSION_TAG}"
+        STREQUAL
+        ""
+)
     set(PROJECT_VERSION "$ENV{VERSION_TAG}")
 else ()
     set(PROJECT_VERSION "0.0.0")
@@ -14,28 +26,28 @@ file(GLOB_RECURSE SOURCES_CPP src/*.cpp)
 file(GLOB_RECURSE SOURCES_HPP src/*.hpp)
 
 # First look for QML files in a qml directory, then in the root
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/qml")
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/qml")
     file(
         GLOB_RECURSE SOURCES_QML
         RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         qml/*.qml
     )
-else()
+else ()
     file(
         GLOB_RECURSE SOURCES_QML
         RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         *.qml
     )
-endif()
+endif ()
 
 # If no QML files found in subdirectory, check root
-if(NOT SOURCES_QML)
+if (NOT SOURCES_QML)
     file(
         GLOB_RECURSE SOURCES_QML
         RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         *.qml
     )
-endif()
+endif ()
 
 # Debug output
 message(STATUS "SOURCES_QML: ${SOURCES_QML}")
