@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: 'Release tag to append binaries to (e.g. v0.30.0, leave empty for latest)'
+        description: 'Target release tag (empty for latest)'
         required: false
         type: string
         default: ''
@@ -20,6 +20,7 @@ jobs:
       upload_url: ${{ steps.get_release.outputs.upload_url }}
       release_tag: ${{ steps.determine_tag.outputs.release_tag }}
       release_id: ${{ steps.get_release.outputs.release_id }}
+      stripped_tag: ${{ steps.determine_tag.outputs.stripped_tag }}
     steps:
       - name: Determine release tag
         id: determine_tag
@@ -28,10 +29,14 @@ jobs:
             LATEST_RELEASE=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/latest | jq -r .tag_name)
             echo "Using latest release: ${LATEST_RELEASE}"
             echo "release_tag=${LATEST_RELEASE}" >> $GITHUB_OUTPUT
+            STRIPPED_TAG="${LATEST_RELEASE#v}"
           else
-            echo "Using specified release: ${{ github.event.inputs.release_tag }}"
-            echo "release_tag=${{ github.event.inputs.release_tag }}" >> $GITHUB_OUTPUT
+            INPUT_TAG="${{ github.event.inputs.release_tag }}"
+            echo "Using specified release: ${INPUT_TAG}"
+            echo "release_tag=${INPUT_TAG}" >> $GITHUB_OUTPUT
+            STRIPPED_TAG="${INPUT_TAG#v}"
           fi
+          echo "stripped_tag=${STRIPPED_TAG}" >> $GITHUB_OUTPUT
 
       - name: Get release
         id: get_release
@@ -74,71 +79,29 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          qmake6
-          make
+          make desktop VERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}"
 
-          # Create AppDir structure
-          mkdir -p AppDir/usr/bin
-          mkdir -p AppDir/usr/lib
-          mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
-
-          # Copy viewsvg binary
-          cp viewsvg AppDir/usr/bin/
-
-          # Copy libresvg.so and set correct permissions
-          cp ../../target/release/libresvg.so AppDir/usr/lib/
-          chmod +x AppDir/usr/lib/libresvg.so
-
-          # Create a simple SVG icon as fallback
-          cat > AppDir/usr/share/icons/hicolor/256x256/apps/viewsvg.svg << EOF
-          <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-            <rect width="256" height="256" fill="#4d4d4d"/>
-            <text x="128" y="128" font-family="sans-serif" font-size="40" fill="white" text-anchor="middle" dominant-baseline="middle">SVG</text>
-          </svg>
-          EOF
-
+      # Package into .AppImage
       - name: Create AppImage
-        working-directory: tools/viewsvg
-        run: |
-          # Install linuxdeploy and Qt plugin
-          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
-          wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
-          chmod +x linuxdeploy-x86_64.AppImage
-          chmod +x linuxdeploy-plugin-qt-x86_64.AppImage
-
-          # Create .desktop file with icon reference
-          mkdir -p AppDir/usr/share/applications
-          cat > AppDir/usr/share/applications/viewsvg.desktop << EOF
-          [Desktop Entry]
-          Type=Application
-          Name=ViewSVG
-          Comment=Simple SVG viewer
-          Exec=viewsvg
-          Icon=viewsvg
-          Categories=Graphics;Viewer;
-          EOF
-
-          # Add library path to environment
-          export LD_LIBRARY_PATH=AppDir/usr/lib:$LD_LIBRARY_PATH
-
-          # Create AppImage with library path
-          export OUTPUT=viewsvg-x86_64.AppImage
-          ./linuxdeploy-x86_64.AppImage --appdir=AppDir --plugin=qt --output=appimage
-
-          # Compress AppImage
-          7z a -tzip -mx9 viewsvg-linux-x86_64.zip viewsvg-x86_64.AppImage
+        id: appimage
+        uses: Kidev/qt-appimage@v1
+        with:
+          install_folder: 'tools/viewsvg/install'
+          app_name: 'ViewSVG-linux-x86_64'
+          category: 'Graphics'
+          icon: 'tools/viewsvg/viewsvg.png'
 
       - name: Collect viewsvg binary
         run: |
           mkdir -p bin
-          cp tools/viewsvg/viewsvg-linux-x86_64.zip bin/
+          cp ${{ steps.appimage.outputs.appimage }} bin/
 
       - name: Check for existing asset and remove if found
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           RELEASE_ID="${{ needs.prepare-release.outputs.release_id }}"
-          ASSET_NAME="viewsvg-linux-x86_64.zip"
+          ASSET_NAME="ViewSVG-linux-x86_64.AppImage"
 
           # Get list of assets
           ASSETS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
@@ -159,9 +122,9 @@ jobs:
         uses: shogo82148/actions-upload-release-asset@v1
         with:
           upload_url: ${{ needs.prepare-release.outputs.upload_url }}
-          asset_path: bin/viewsvg-linux-x86_64.zip
-          asset_name: viewsvg-linux-x86_64.zip
-          asset_content_type: application/zip
+          asset_path: bin/ViewSVG-linux-x86_64.AppImage
+          asset_name: ViewSVG-linux-x86_64.AppImage
+          asset_content_type: application/octet-stream
 
       - name: Set success output
         id: build_success
@@ -194,15 +157,10 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          qmake6
-          nmake
-          mkdir viewsvg-bin
-          cp release/viewsvg.exe viewsvg-bin/viewsvg.exe
-          windeployqt --no-translations viewsvg-bin/viewsvg.exe
-          cd viewsvg-bin
-          7z a -tzip -mx9 viewsvg-win64.zip *
+          make desktop VERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}"
+          7z a -tzip -mx9 viewsvg-win64.zip install/*
 
-      - name: Collect
+      - name: Collect viewsvg binary
         run: |
           mkdir bin
           cp tools/viewsvg/viewsvg-bin/viewsvg-win64.zip bin/
@@ -268,14 +226,10 @@ jobs:
       - name: Build viewsvg
         working-directory: tools/viewsvg
         run: |
-          qmake6
-          make
-          macdeployqt viewsvg.app
-          rm -r viewsvg.app/Contents/Plugins/iconengines
-          rm -r viewsvg.app/Contents/Plugins/imageformats
-          7z a -tzip -mx9 viewsvg-macos-x86_64.zip viewsvg.app
+          make desktop VERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}"
+          7z a -tzip -mx9 viewsvg-macos-x86_64.zip install/viewsvg.app
 
-      - name: Collect
+      - name: Collect viewsvg binary
         run: |
           mkdir bin
           cp tools/viewsvg/viewsvg-macos-x86_64.zip bin/
