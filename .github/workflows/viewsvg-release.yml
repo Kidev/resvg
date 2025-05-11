@@ -80,19 +80,28 @@ jobs:
         working-directory: tools/viewsvg
         run: |
           make desktop VERSION_TAG="${{ needs.prepare-release.outputs.stripped_tag }}"
-          7z a -tzip -mx9 viewsvg-linux-x86_64.zip install/viewsvg-x86_64.AppImage
+
+      # Package into .AppImage
+      - name: Create AppImage
+        id: appimage
+        uses: Kidev/qt-appimage@v1
+        with:
+          install_folder: 'tools/viewsvg/install'
+          app_name: 'ViewSVG-linux-x86_64'
+          category: 'Graphics'
+          icon: 'tools/viewsvg/viewsvg.png'
 
       - name: Collect viewsvg binary
         run: |
           mkdir -p bin
-          cp tools/viewsvg/viewsvg-linux-x86_64.zip bin/
+          cp ${{ steps.appimage.outputs.appimage }} bin/
 
       - name: Check for existing asset and remove if found
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           RELEASE_ID="${{ needs.prepare-release.outputs.release_id }}"
-          ASSET_NAME="viewsvg-linux-x86_64.zip"
+          ASSET_NAME="ViewSVG-linux-x86_64.AppImage"
 
           # Get list of assets
           ASSETS=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
@@ -113,9 +122,9 @@ jobs:
         uses: shogo82148/actions-upload-release-asset@v1
         with:
           upload_url: ${{ needs.prepare-release.outputs.upload_url }}
-          asset_path: bin/viewsvg-linux-x86_64.zip
-          asset_name: viewsvg-linux-x86_64.zip
-          asset_content_type: application/zip
+          asset_path: bin/ViewSVG-linux-x86_64.AppImage
+          asset_name: ViewSVG-linux-x86_64.AppImage
+          asset_content_type: application/octet-stream
 
       - name: Set success output
         id: build_success
