@@ -45,11 +45,8 @@ jobs:
         uses: Kidev/qt-appimage@v0.0.1
         with:
           install_folder: 'tools/viewsvg/install'
-          app_name: 'MyApplication'
-          comment: 'An awesome Qt application'
           category: 'Graphics'
-          icon: './icon.png'
-          binary: 'myapp'
+          icon: 'tools/viewsvg/viewsvg.png'
 
       # Create release for version
       - name: Create Release
