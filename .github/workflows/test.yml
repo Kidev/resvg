@@ -42,7 +42,7 @@ jobs:
       # Package into .AppImage
       - name: Create AppImage
         id: appimage
-        uses: Kidev/qt-appimage@v0.0.1
+        uses: Kidev/qt-appimage@v1
         with:
           install_folder: 'tools/viewsvg/install'
           category: 'Graphics'
