@@ -18,7 +18,7 @@ jobs:
         id: get_version
         run: |
           echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          STRIPPED_TAG="${LATEST_RELEASE#v}"
+          STRIPPED_TAG="2.0.0"
           echo "NO_V_VERSION=${STRIPPED_TAG}" >> $GITHUB_OUTPUT
 
       - name: Build C API
